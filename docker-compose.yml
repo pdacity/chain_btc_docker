@@ -1,0 +1,42 @@
+version: '2.4'
+
+services:
+  bitcoind:
+    image: kylemanna/bitcoind
+    container_name: chain-btc-02
+    environment:
+#      DISABLEWALLET: 1 
+      PRINTTOCONSOLE: 1
+      RPCUSER: ${CHAIN_USER}
+      RPCPASSWORD: ${CHAIN_PASS}
+    volumes:
+      - $PWD/btc-data:/bitcoin/.bitcoin
+    ports:
+      - 8333:8333
+      - 127.0.0.1:8332:8332
+    restart: always
+    cpu_shares: 390
+    mem_limit: 4g
+    memswap_limit: 128m
+
+  btc-exporter:
+    image: jvstein/bitcoin-prometheus-exporter:latest
+    container_name: chain-btc-02-exp
+    ports:
+      - "8334:8334"
+    environment:
+      BITCOIN_RPC_HOST: bitcoind
+      BITCOIN_RPC_USER: ${CHAIN_USER}
+      BITCOIN_RPC_PASSWORD: ${CHAIN_PASS}
+      #BITCOIN_CONF_PATH: /etc/bitcoin/bitcoin.conf
+      REFRESH_SECONDS: 10
+      LOG_LEVEL: "INFO"
+    depends_on:
+      - bitcoind
+    volumes:
+      - $PWD/btc-data/bitcoin.conf:/.bitcoin/bitcoin.conf
+    restart: always
+    cpu_shares: 20
+    mem_limit: 256m
+    memswap_limit: 32m
+
